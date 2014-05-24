@@ -192,9 +192,10 @@ public class MappingLoader_MCP {
 			String srgName = entry.getKey();
 			String mcpName = entry.getValue();
 			
-			if(srgFieldOwners.get(srgName) == null)
-				System.out.println("Field exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
-			else {
+			if(srgFieldOwners.get(srgName) == null) {
+				//System.out.println("Field exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
+				// these are forge-added names
+			} else {
 				for(String srgOwner : srgFieldOwners.get(srgName)) {
 					String mcpOwner = srgOwner;
 					
@@ -209,7 +210,8 @@ public class MappingLoader_MCP {
 			String mcpName = entry.getValue();
 			
 			if(srgMethodOwners.get(srgName) == null) {
-				System.out.println("Method exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
+				//System.out.println("Method exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
+				// these are forge-added names
 			} else {
 				for(String srgOwner : srgMethodOwners.get(srgName)) {
 					String srgDesc = srgMethodDescriptors.get(srgName);
@@ -234,11 +236,11 @@ public class MappingLoader_MCP {
 
 	public static String getMCVer(File mcpDir) throws IOException {
 		try {
-			Scanner in = new Scanner(new File(mcpDir, "conf/version.cfg"));
+			Scanner in = new Scanner(new File(mcpDir, "src/main/resources/mcpmod.info"));
 			while(in.hasNextLine()) {
-				String line = in.nextLine();
-				if(line.startsWith("ClientVersion"))
-					return line.split("=")[1].trim();
+				String line = in.nextLine().trim();
+				if(line.startsWith("\"mcversion\":"))
+					return line.split(":")[1].replace('"', ' ').replace(',', ' ').trim();
 			}
 		} catch (Throwable _) {}
 		return "unknown";

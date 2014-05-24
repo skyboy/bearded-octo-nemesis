@@ -32,6 +32,8 @@ public class MCPRemap extends CUIBase {
 		Timer timer = new Timer();
 		int readTime = 0, remapTime = 0, writeTime = 0;
 		
+		MappingFactory.quiet = quiet;
+		
 		System.out.println("Loading MCP configuration");
 		
 		String mcVer = MappingLoader_MCP.getMCVer(mcpDir);
@@ -44,13 +46,15 @@ public class MCPRemap extends CUIBase {
 		List<ClassCollection> refs = new ArrayList<ClassCollection>();
 		for(RefOption ro : refOptsParsed) {
 			NameSet refNS = new NameSet(ro.type, side, mcVer);
-		
-			System.out.println("Loading "+ro.file);
+
+			if (!quiet)
+				System.out.println("Loading "+ro.file.getName());
 			ClassCollection refCC = ClassCollectionFactory.loadClassCollection(refNS, ro.file, null);
 			readTime += timer.flip();
 			
 			if(!refNS.equals(inputNS)) {
-				System.out.println("Remapping "+ro.file+" ("+refNS+" -> "+inputNS+")");
+				if (!quiet)
+					System.out.println("Remapping "+ro.file.getName()+" ("+refNS+" -> "+inputNS+")");
 				refCC = Remapper.remap(refCC, inputNS, Collections.<ClassCollection>emptyList(), null);
 				remapTime += timer.flip();
 			}
@@ -58,32 +62,36 @@ public class MCPRemap extends CUIBase {
 			refs.add(refCC);
 		}
 		
-		System.out.println("Loading "+inFile);
+		if (!quiet)
+			System.out.println("Loading "+inFile.getName());
 		ClassCollection inputCC = ClassCollectionFactory.loadClassCollection(inputNS, inFile, null);
 		readTime += timer.flip();
 		
-		System.out.println("Remapping "+inFile+" ("+inputNS+" -> "+outputNS+")");
+		System.out.println("Remapping "+inFile.getName()+" ("+inputNS+" -> "+outputNS+")");
 		ClassCollection outputCC = Remapper.remap(inputCC, outputNS, refs, null);
 		remapTime += timer.flip();
 		
-		System.out.println("Writing "+outFile);
+		System.out.println("Writing "+outFile.getName());
 		JarWriter.write(outFile, outputCC, null);
 		writeTime += timer.flip();
 		
-		//System.out.printf("Completed in %dms (%dms read, %dms remap, %dms write)\n", readTime+remapTime+writeTime, readTime, remapTime, writeTime);
-		System.out.printf("Completed in %d ms\n", readTime + remapTime + writeTime);
+		if (!quiet)
+			System.out.printf("Completed in %d ms (%dms read, %dms remap, %dms write)\n", readTime+remapTime+writeTime, readTime, remapTime, writeTime);
+		else
+			System.out.printf("Completed in %d ms\n", readTime + remapTime + writeTime);
 	}
 	
 	
 	@Required @Option("-mcp")	public File mcpDir;
-	@Required @Option("-from")	public NameSet.Type fromType;
-	@Required @Option("-to")	public NameSet.Type toType;
-	@Required @Option("-side")	public NameSet.Side side;
 	@Required @Option("-in")	public File inFile;
 	@Required @Option("-out")	public File outFile;
+	@Required @Option("-from")	public NameSet.Type fromType;
+	@Required @Option("-to")	public NameSet.Type toType;
+	          @Option("-side")	public NameSet.Side side = NameSet.Side.UNIVERSAL;
 	          @Option("-ref")	public List<String> refOpts = new ArrayList<String>();
 	          @Option("-refn")	public List<String> refnOpts = new ArrayList<String>();
 	          @Option("-jref")	public List<String> jrefOpts = new ArrayList<String>();
+	          @Option("-q")		public boolean quiet = false; 
 	
     private static class RefOption {
     	public NameSet.Type type;
@@ -110,7 +118,7 @@ public class MCPRemap extends CUIBase {
 		}
 		
 		if(outFile.isDirectory()) {
-			System.err.println("Output file already exists and is a directory: " + outFile.getAbsolutePath());
+			System.err.println("Output file is a directory: " + outFile.getAbsolutePath());
 			ok = false;
 		}
 		
@@ -148,7 +156,7 @@ public class MCPRemap extends CUIBase {
 			for (String s : sl) {
 				File d = new File(s);
 				if (!d.isDirectory()) {
-					System.err.println("Invalid input for -jref: Not a directory. " + s);
+					System.err.println("Invalid input for -jref. Not a directory: " + s);
 					continue;
 				}
 				File[] l = d.listFiles(new FilenameFilter() {

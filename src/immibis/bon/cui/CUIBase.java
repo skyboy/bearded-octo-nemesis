@@ -30,27 +30,37 @@ public abstract class CUIBase {
 		return null;
 	}
 	
+	private String ensureNext(String[] args, Int index, String o, String v) {
+		if (v != null)
+			return v;
+		if (index.value >= args.length)
+			throw new IllegalArgumentException("Expected an argument for " + o);
+		return args[index.value++];
+	}
+	
 	@SuppressWarnings("unchecked")
 	private boolean parseOptions(String[] args) throws Exception {
-		if((args.length % 2) == 1) {
-			System.err.println("Expected an even number of arguments.");
-			return false;
-		}
-		
 		boolean ok = true;
 		
-		for(int k = 0; k < args.length; k += 2) {
-			String opt = args[k];
-			String val = args[k + 1];
+		for(Int k = new Int(); k.value < args.length; ) {
+			String opt = args[k.value++];
+			String val = null;
 			
 			Field f = getOptionField(opt);
 			if(f == null) {
-				System.err.println("Unknown option: " + opt);
-				ok = false;
-				continue;
+				String[] t = opt.split(" ", 2);
+				f = getOptionField(t[0]);
+				if (f == null) {
+					System.err.println("Unknown option: " + opt);
+					ok = false;
+					continue;
+				}
+				opt = t[0];
+				if (t.length == 2)
+					val = t[1];
 			}
 			
-			if(Enum.class.isAssignableFrom(f.getType())) {
+			if(Enum.class.isAssignableFrom(f.getType())) {val = ensureNext(args, k, opt, val);
 				try {
 					f.set(this, Enum.valueOf(f.getType().asSubclass(Enum.class), val));
 				} catch(EnumConstantNotPresentException e) {
@@ -60,22 +70,25 @@ public abstract class CUIBase {
 					continue;
 				}
 				
-			} else if(f.getType() == String.class) {
+			} else if(f.getType() == String.class) {val = ensureNext(args, k, opt, val);
 				if(f.get(this) != null) {
 					System.err.println("Option specified more than once: " + opt);
 					ok = false;
 				} else
 					f.set(this, val);
 				
-			} else if(f.getType() == File.class) {
+			} else if(f.getType() == File.class) {val = ensureNext(args, k, opt, val);
 				if(f.get(this) != null) {
 					System.err.println("Option specified more than once: " + opt);
 					ok = false;
 				} else
 					f.set(this, new File(val));
 				
-			} else if(f.getType() == List.class) {
+			} else if(f.getType() == List.class) {val = ensureNext(args, k, opt, val);
 				((List<String>)f.get(this)).add(val);
+				
+			} else if(f.getType() == boolean.class) {
+				f.setBoolean(this, !f.getBoolean(this));
 				
 			} else {
 				System.err.println("BUG: Invalid option type "+f.getType().getName()+" for option field "+f.getName()+" for option "+opt);
@@ -102,5 +115,11 @@ public abstract class CUIBase {
 			showUsage();
 		else if(parseOptions(args) && checkOptions())
 			run();
+	}
+	
+	private class Int {
+		public int value;
+		public Int() { this(0); }
+		public Int(int v) { value = v; }
 	}
 }

@@ -28,6 +28,8 @@ public class MappingFactory {
 	
 	private static Map<String, MappingLoader_MCP> mcpInstances = new HashMap<String, MappingLoader_MCP>();
 	
+	public static boolean quiet = false;
+	
 	public static void registerMCPInstance(String mcVersion, NameSet.Side side, File mcpPath, IProgressListener progress) throws IOException, CantLoadMCPMappingException {
 		mcpInstances.put(mcVersion+" "+side, new MappingLoader_MCP(mcVersion, side, mcpPath, progress));
 	}
