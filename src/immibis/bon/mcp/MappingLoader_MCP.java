@@ -4,6 +4,7 @@ import immibis.bon.IProgressListener;
 import immibis.bon.Mapping;
 import immibis.bon.NameSet;
 import immibis.bon.NameSet.Side;
+import immibis.bon.io.MappingFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class MappingLoader_MCP {
 	private Mapping forwardSRG, reverseSRG, forwardCSV, reverseCSV;
 	
 	
-	private Map<String, String> srgMethodDescriptors = new HashMap<String, String>(); // SRG name -> SRG descriptor
+	private Map<String, Set<String>> srgMethodDescriptors = new HashMap<String, Set<String>>(); // SRG name -> SRG descriptors
 	private Map<String, Set<String>> srgMethodOwners = new HashMap<String, Set<String>>(); // SRG name -> SRG owners
 	private Map<String, Set<String>> srgFieldOwners = new HashMap<String, Set<String>>(); // SRG name -> SRG owners
 	
@@ -163,7 +164,10 @@ public class MappingLoader_MCP {
 			String srgDesc = forwardSRG.mapMethodDescriptor(obfDesc);
 			String srgOwner = srg.classes.get(obfOwner);
 			
-			srgMethodDescriptors.put(srgName, srgDesc);
+			Set<String> srgMethodDescriptorsThis = srgMethodDescriptors.get(srgName);
+			if(srgMethodDescriptorsThis == null)
+				srgMethodDescriptors.put(srgName, srgMethodDescriptorsThis = new HashSet<String>());
+			srgMethodDescriptorsThis.add(srgDesc);
 			
 			Set<String> srgMethodOwnersThis = srgMethodOwners.get(srgName);
 			if(srgMethodOwnersThis == null)
@@ -193,8 +197,9 @@ public class MappingLoader_MCP {
 			String mcpName = entry.getValue();
 			
 			if(srgFieldOwners.get(srgName) == null) {
-				//System.out.println("Field exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
-				// these are forge-added names
+				if (!MappingFactory.quiet)
+					System.out.println("Field exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
+				// these are names from old versions that have not been cleaned up
 			} else {
 				for(String srgOwner : srgFieldOwners.get(srgName)) {
 					String mcpOwner = srgOwner;
@@ -210,16 +215,18 @@ public class MappingLoader_MCP {
 			String mcpName = entry.getValue();
 			
 			if(srgMethodOwners.get(srgName) == null) {
-				//System.out.println("Method exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
-				// these are forge-added names
+				if (!MappingFactory.quiet)
+					System.out.println("Method exists in CSV but not in SRG: "+srgName+" (CSV name: "+mcpName+")");
+				// these are names from old versions that have not been cleaned up
 			} else {
-				for(String srgOwner : srgMethodOwners.get(srgName)) {
-					String srgDesc = srgMethodDescriptors.get(srgName);
-					String mcpOwner = srgOwner;
-					String mcpDesc = srgDesc;
+				for (String srgOwner : srgMethodOwners.get(srgName)) {
+					for (String srgDesc : srgMethodDescriptors.get(srgName)) {
+						String mcpOwner = srgOwner;
+						String mcpDesc = srgDesc;
 					
-					forwardCSV.setMethod(srgOwner, srgName, srgDesc, mcpName);
-					reverseCSV.setMethod(mcpOwner, mcpName, mcpDesc, srgName);
+						forwardCSV.setMethod(srgOwner, srgName, srgDesc, mcpName);
+						reverseCSV.setMethod(mcpOwner, mcpName, mcpDesc, srgName);
+					}
 				}
 			}
 		}
