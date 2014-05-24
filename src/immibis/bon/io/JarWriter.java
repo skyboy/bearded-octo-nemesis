@@ -62,6 +62,7 @@ public class JarWriter {
 				j_out.putNextEntry(new JarEntry(dirPath + "/"));
 				j_out.closeEntry();
 			}
+			j_out.flush();
 			j_out.close();
 		} catch (Throwable _) {}
 	}

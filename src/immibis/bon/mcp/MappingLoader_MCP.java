@@ -54,10 +54,7 @@ public class MappingLoader_MCP {
 		switch(side) {
 		case UNIVERSAL:
 			sideNumbers = new int[] {2, 0};
-			if(new File(mcpDir, "packaged.srg").exists()) {
-				srgFile = new File(mcpDir, "packaged.srg");
-				excFile = new File(mcpDir, "packaged.exc");
-			} else if(new File(mcpDir, "conf/packaged.srg").exists()) {
+			if(new File(mcpDir, "conf/packaged.srg").exists()) {
 				srgFile = new File(mcpDir, "conf/packaged.srg");
 				excFile = new File(mcpDir, "conf/packaged.exc");
 			} else {

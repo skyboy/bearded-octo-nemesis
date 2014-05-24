@@ -25,7 +25,7 @@ public class ExcFile {
 		Scanner in = new Scanner(new FileReader(f));
 		try {
 			while(in.hasNextLine()) {
-				if(in.hasNext("#")) {
+				if(in.hasNext("#") || in.hasNext("=CL_")) {
 					in.nextLine();
 					continue;
 				}
