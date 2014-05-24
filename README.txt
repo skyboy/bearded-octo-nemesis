@@ -1,4 +1,5 @@
-MAIN DOWNLOAD: http://dl.dropbox.com/u/2944265/mods/BON.jar
+Download for immibis' version: http://dl.dropbox.com/u/2944265/mods/BON.jar
+Download for skyboy's version: https://github.com/skyboy/bearded-octo-nemesis/releases/tag/1.0
 
 You must install Forge (if necessary) and recompile before using BON to deobfuscate a mod.
 
