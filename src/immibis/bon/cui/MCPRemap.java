@@ -72,7 +72,7 @@ public class MCPRemap extends CUIBase {
 		remapTime += timer.flip();
 		
 		System.out.println("Writing "+outFile.getName());
-		JarWriter.write(outFile, outputCC, null);
+		JarWriter.write(outFile, outputCC, keepManifest, null);
 		writeTime += timer.flip();
 		
 		if (!quiet)
@@ -91,7 +91,8 @@ public class MCPRemap extends CUIBase {
 	          @Option("-ref")	public List<String> refOpts = new ArrayList<String>();
 	          @Option("-refn")	public List<String> refnOpts = new ArrayList<String>();
 	          @Option("-jref")	public List<String> jrefOpts = new ArrayList<String>();
-	          @Option("-q")		public boolean quiet = false; 
+	          @Option("-q")		public boolean quiet = false;
+	          @Option("-m")		public boolean keepManifest = false;
 	
     private static class RefOption {
     	public NameSet.Type type;

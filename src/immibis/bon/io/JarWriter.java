@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import org.objectweb.asm.tree.ClassNode;
@@ -26,6 +27,10 @@ public class JarWriter {
 	}
 
 	public static void write(File file, ClassCollection cc, IProgressListener progress) throws IOException {
+		write(file, cc, false, progress);
+	}
+
+	public static void write(File file, ClassCollection cc, boolean manifest, IProgressListener progress) throws IOException {
 		if(progress != null)
 			progress.setMax(cc.getAllClasses().size() + cc.getExtraFiles().size());
 		
@@ -36,6 +41,16 @@ public class JarWriter {
 		try {
 			@SuppressWarnings("resource")
 			JarOutputStream j_out = new JarOutputStream(new FileOutputStream(file));
+			
+			if (manifest && cc.getManifest() != null) {
+				if (!MappingFactory.quiet)
+					System.out.println("Keeping manifest from previous jar");
+				addDirectories(JarFile.MANIFEST_NAME, dirs);
+				j_out.putNextEntry(new JarEntry(JarFile.MANIFEST_NAME));
+				cc.getManifest().write(j_out);
+				j_out.closeEntry();
+			}
+			
 			for(ClassNode cn : cc.getAllClasses()) {
 				if(progress != null) 
 					progress.set(files++);

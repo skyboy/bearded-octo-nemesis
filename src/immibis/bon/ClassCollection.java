@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.Manifest;
 
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassCollection implements Cloneable {
-	public ClassCollection(NameSet nameSet, Collection<ClassNode> classes) {
+	public ClassCollection(NameSet nameSet, Collection<ClassNode> classes, Manifest manifest) {
 		this.nameSet = nameSet;
 		this.classes.addAll(classes);
+		this.manifest = manifest;
 	}
 	
 	private NameSet nameSet;
+	private Manifest manifest;
 	private Collection<ClassNode> classes = new ArrayList<ClassNode>();
 	private Map<String, byte[]> extraFiles = new HashMap<String, byte[]>();
 	
@@ -23,6 +26,10 @@ public class ClassCollection implements Cloneable {
 	
 	public NameSet getNameSet() {
 		return nameSet;
+	}
+	
+	public Manifest getManifest() {
+		return manifest;
 	}
 	
 	@Override

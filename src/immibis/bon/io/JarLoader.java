@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 import org.objectweb.asm.tree.ClassNode;
 
@@ -21,13 +22,14 @@ public class JarLoader {
 	
 	private static final boolean VERIFY_SIGNATURES = false;
 	
-	@SuppressWarnings("resource")
 	public static ClassCollection loadClassesFromJar(NameSet nameSet, File jarFile, IProgressListener progress) throws IOException, ClassFormatException {
 		Collection<ClassNode> classes = new ArrayList<ClassNode>();
 		Map<String, byte[]> extraFiles = new HashMap<String, byte[]>();
+		Manifest manifest = null;
 		
-		{
-			JarInputStream j_in = new JarInputStream(new FileInputStream(jarFile), VERIFY_SIGNATURES);
+		JarInputStream j_in = null;
+		try {
+			j_in = new JarInputStream(new FileInputStream(jarFile), VERIFY_SIGNATURES);
 			JarEntry entry;
 			
 			while((entry = j_in.getNextJarEntry()) != null) {
@@ -54,9 +56,13 @@ public class JarLoader {
 					extraFiles.put(name, IOUtils.readStreamFully(j_in));
 				}
 			}
+			manifest = j_in.getManifest();
+		} finally {
+			if (j_in != null)
+				j_in.close();
 		}
 		
-		ClassCollection cc = new ClassCollection(nameSet, classes);
+		ClassCollection cc = new ClassCollection(nameSet, classes, manifest);
 		cc.getExtraFiles().putAll(extraFiles);
 		return cc;
 	}

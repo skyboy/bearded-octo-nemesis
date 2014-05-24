@@ -18,7 +18,7 @@ public class ClassCollectionFactory {
 		if(from.isDirectory()) {
 			Collection<ClassNode> classes = new ArrayList<ClassNode>();
 			loadFromDir("", from, classes);
-			return new ClassCollection(ns, classes);
+			return new ClassCollection(ns, classes, null);
 		}
 		else
 			return JarLoader.loadClassesFromJar(ns, from, progress);
