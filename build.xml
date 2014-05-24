@@ -1,0 +1,97 @@
+<project name="MineFactoryReloaded" default="install" basedir=".">
+	<property environment="env"/>
+	
+	<!-- Basic directories -->
+	<property name="src.dir" value="src"/>
+	<property name="build.dir" value="build"/>
+	<property name="resources.dir" value="resources"/>
+	<property name="download.dir" value="${build.dir}/downloads"/>
+	
+	<!-- Project information -->
+	<property name="build.name" value="BON"/>
+	<property name="class.pckg" value="immibis.bon"/>
+	
+	<!-- Packaging -->
+	<property name="dist.dir" value="${build.dir}/dist"/>
+	<property name="compile.dir" value="${build.dir}/compile"/>
+	<property name="classes.dir" value="${build.dir}/packaging"/>
+	<property name="apiclasses.dir" value="${build.dir}/api-packaging"/>
+
+	<!-- Enforce some paths -->
+	<mkdir dir="${build.dir}"/>
+	
+	<!-- Task skipping -->
+	<target name="properties">
+		<available property="has.api" file="${src.dir}/${class.pckg}/api"/>
+	</target>
+	
+	<!-- Building process -->
+	<target name="install" depends="build">
+		<!-- Cleanup -->
+		<delete dir="${apiclasses.dir}"/>
+		<delete dir="${classes.dir}"/>
+		<delete>
+			<fileset dir="${dist.dir}">
+				<exclude name="${build.name}-${build.number}.jar"/>
+				<exclude name="${build.name}-API-${build.number}.zip"/>
+			</fileset>
+		</delete>
+	</target>
+
+	<macrodef name="install-lite">
+		<attribute name="build"/>
+		<attribute name="classes" default="${compile.dir}"/>
+		<sequential>
+			<copy todir="${classes.dir}" preservelastmodified="true">
+				<fileset dir="@{classes}">
+					<include name="**/*.class"/>
+				</fileset>
+				<fileset dir="${resources.dir}"/>
+			</copy>
+			<jar destfile="${dist.dir}/${build.name}-@{build}.jar"
+				compress="true" level="9" basedir="${classes.dir}"
+				manifest="META-INF/MANIFEST.MF"/>
+		</sequential>
+	</macrodef>
+
+	<target name="build" depends="get-build-number" unless="already.compiled">
+		<!-- Recompile -->
+		<mkdir dir="${compile.dir}"/>
+		
+		<depend srcdir="${src.dir}" destdir="${compile.dir}"
+			cache="${build.dir}/depcache" closure="true">
+			<include name="**/*.java"/>
+		</depend>
+		<javac srcdir="${src.dir}" destdir="${compile.dir}" target="1.6" source="1.6"
+			debug="true" debuglevel="lines,source" includeAntRuntime="false">
+			<include name="**/*.java"/>
+		</javac>
+		
+		<local name="build"/><property name="build" value="${build.number}"/>
+		<install-lite build="${build}"/>
+	</target>
+
+	<target name="package-api" depends="get-build-number" unless="already.compiled" if="has.api">
+		<!-- Copy & package API -->
+		<copy todir="${apiclasses.dir}/${class.pckg}/api">
+			<fileset dir="${src.dir}/${class.pckg}/api"/>
+		</copy>
+		<zip destfile="${dist.dir}/${build.name}-API-${build.number}.zip" basedir="${apiclasses.dir}"/>
+	</target>
+
+	<target name="get-build-number" depends="build-number-there" unless="build.number">
+		<echo message="!! No build number set !!"/>
+		<property name="build.number" value="CUSTOM_BUILD"/>
+	</target>
+
+	<target name="build-number-there" if="env.BUILD_NUMBER" unless="build.number">
+		<echo message="Using build number ${env.BUILD_NUMBER}..."/>
+		<property name="build.number" value="${env.BUILD_NUMBER}"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+	</target>
+
+	<target name="jar" depends="install"/>
+</project>
