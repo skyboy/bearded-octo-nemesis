@@ -60,7 +60,7 @@ public class Mapping {
 		return ret == null ? name : ret;
 	}
 	
-	public String getField(String clazz, String name) {
+	public String getField(String clazz, String name, String desc) {
 		String ret = fields.get(clazz + "/" + name);
 		return ret == null ? name : ret;
 	}

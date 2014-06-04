@@ -14,13 +14,18 @@ public class JoinMapping extends Mapping {
 	}
 	
 	@Override
-	public void addPrefix(String old, String new_) {
-		throw new UnsupportedOperationException("Mapping is unmodifiable");
+	public String getClass(String in) {
+		return b.getClass(a.getClass(in));
 	}
 	
 	@Override
-	public String getClass(String in) {
-		return b.getClass(a.getClass(in));
+	public String getField(String clazz, String name, String desc) {
+		return b.getField(a.getClass(clazz), a.getField(clazz, name, desc), a.mapTypeDescriptor(desc));
+	}
+	
+	@Override
+	public String getMethod(String clazz, String name, String desc) {
+		return b.getMethod(a.getClass(clazz), a.getMethod(clazz, name, desc), a.mapMethodDescriptor(desc));
 	}
 	
 	@Override
@@ -32,13 +37,18 @@ public class JoinMapping extends Mapping {
 	}
 	
 	@Override
-	public String getField(String clazz, String name) {
-		return b.getField(a.getClass(clazz), a.getField(clazz, name));
+	public String mapMethodDescriptor(String desc) {
+		return b.mapMethodDescriptor(a.mapMethodDescriptor(desc));
 	}
 	
 	@Override
-	public String getMethod(String clazz, String name, String desc) {
-		return b.getMethod(a.getClass(clazz), a.getMethod(clazz, name, desc), a.mapMethodDescriptor(desc));
+	public String mapTypeDescriptor(String in) {
+		return b.mapTypeDescriptor(a.mapTypeDescriptor(in));
+	}
+	
+	@Override
+	public void addPrefix(String old, String new_) {
+		throw new UnsupportedOperationException("Mapping is unmodifiable");
 	}
 	
 	@Override
