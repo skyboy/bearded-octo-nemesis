@@ -226,6 +226,12 @@ public class MCPRemap extends CUIBase {
 		System.out.println("       This option *is* required to be a directory, and you may specify multiple using the");
 		System.out.println("       path separator character (; on windows, : on *nix) on your OS, or multiple options.");
 		System.out.println("");
+		System.out.println("  -m");
+		System.out.println("       Will ensure the manifest file (when remapping a jar) will be kept in the generated output jar.");
+		System.out.println("");
+		System.out.println("  -q");
+		System.out.println("       Will minimize the output of BON to the console.");
+		System.out.println("");
 		System.out.println("Example command line:");
 		System.out.println("  -mcp . -from OBF -to MCP -side UNIVERSAL -in RedPowerDigital.zip -out RedPowerDigital-deobf.zip -ref RedPowerCore.zip -refn MCP:bin/minecraft");
 		System.out.println("       Deobfuscates RedPowerDigital.zip, saving the result in RedPowerDigital-deobf.zip.");
