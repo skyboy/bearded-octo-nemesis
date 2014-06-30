@@ -188,7 +188,7 @@ public class MCPRemap extends CUIBase {
 	@Override
 	protected void showUsage() {
 		System.out.println("Usage:");
-		System.out.println("  java -cp BON.jar immibis.bon.cui.MCPRemap <option>...");
+		System.out.println("  java -jar BON.jar <option>...");
 		System.out.println("");
 		System.out.println("Required options:");
 		System.out.println("  -mcp <mcp dir>");

@@ -45,6 +45,10 @@ public abstract class CUIBase {
 		for(Int k = new Int(); k.value < args.length; ) {
 			String opt = args[k.value++];
 			String val = null;
+			if (opt.equalsIgnoreCase("--help") || opt.equalsIgnoreCase("-help") || opt.equalsIgnoreCase("-h")) {
+				showUsage();
+				return false;
+			}
 			
 			Field f = getOptionField(opt);
 			if(f == null) {
@@ -107,6 +111,8 @@ public abstract class CUIBase {
 				ok = false;
 			}
 		}
+		if (!ok)
+			showUsage();
 		return ok;
 	}
 	

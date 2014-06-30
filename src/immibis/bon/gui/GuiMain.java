@@ -4,12 +4,17 @@ import immibis.bon.ClassCollection;
 import immibis.bon.IProgressListener;
 import immibis.bon.NameSet;
 import immibis.bon.Remapper;
+import immibis.bon.cui.MCPRemap;
 import immibis.bon.io.ClassCollectionFactory;
 import immibis.bon.io.JarWriter;
 import immibis.bon.io.MappingFactory;
 import immibis.bon.mcp.MappingLoader_MCP;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,8 +30,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.prefs.Preferences;
-
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 public class GuiMain extends JFrame {
 	private static final long serialVersionUID = 1;
@@ -433,11 +446,18 @@ public class GuiMain extends JFrame {
 	}
 	
 	public static void main(String[] args) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				new GuiMain().setVisible(true);
+		if (args.length != 0)
+			try {
+				MCPRemap.main(args);
+			} catch (Throwable e) {
+				e.printStackTrace();
 			}
-		});
+		else
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					new GuiMain().setVisible(true);
+				}
+			});
 	}
 }
