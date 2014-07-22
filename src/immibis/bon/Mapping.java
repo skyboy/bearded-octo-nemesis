@@ -36,13 +36,20 @@ public class Mapping {
 	public String getClass(String in) {
 		if(in == null)
 			return null;
-		if(in.startsWith("[L") && in.endsWith(";"))
-			return "[L" + getClass(in.substring(2, in.length() - 1)) + ";";
 		if(in.startsWith("["))
 			return "[" + getClass(in.substring(1));
-		
-		if(in.equals("B") || in.equals("C") || in.equals("D") || in.equals("F") || in.equals("I") || in.equals("J") || in.equals("S") || in.equals("Z"))
-			return in;
+		if(in.startsWith("L") && in.endsWith(";"))
+			return "L" + getClass(in.substring(1, in.length() - 1)) + ";";
+
+		if (in.length() == 1)
+			switch (in.charAt(0))
+			{
+			case 'D': case 'Z': case 'B': case 'C':
+			case 'S': case 'I': case 'J': case 'F':
+				return in;
+			default:
+				break;
+			}
 		
 		String ret = classes.get(in);
 		if(ret != null)
@@ -78,44 +85,59 @@ public class Mapping {
 	public void setDefaultPackage(String p) {
 		defaultPackage = p;
 	}
+	
+	public String parseTypes(String type, boolean generic, boolean method) {
+		if (type == null) return null;
+		int pos = 0, len = type.length(), l = type.indexOf('<');
+		char c;
+		StringBuilder out = new StringBuilder(len);
+		do {
+			switch((c = type.charAt(pos)))
+			{
+			case '(': case ')': if (!method) break;
+			case 'V': case 'Z': case 'B': case 'C':
+			case 'S': case 'I': case 'J': case 'F':
+			case 'D': case '[': case '<': case '>':
+				out.append(c);
+				pos++;
+				continue;
+			case 'L':
+				{
+					out.append('L');
+					char o = ';';
+					int end = type.indexOf(';', pos);
+					if ((l > 0) & end > l) {
+						end = l;
+						o = '<';
+						l = type.indexOf('<', l + 1);
+					}
+					final String obf = type.substring(pos + 1, end);
+					out.append(getClass(obf)).append(o);
+					pos = end + 1;
+				}
+				continue;
+			default:
+				if (!generic) break;
+				out.append(c);
+				pos++;
+				continue;
+			}
+			throw new RuntimeException("Unknown character in descriptor: " + type.charAt(pos) + " (in " + type + ")");
+		} while (pos < len);
+		return out.toString();
+	}
 
 	public String mapMethodDescriptor(String desc) {
 		// some basic sanity checks, doesn't ensure it's completely valid though
 		if(desc.length() == 0 || desc.charAt(0) != '(' || desc.indexOf(")") < 1)
 			throw new IllegalArgumentException("Not a valid method descriptor: " + desc);
 		
-		int pos = 0;
-		String out = "";
-		while(pos < desc.length())
-		{
-			switch(desc.charAt(pos))
-			{
-			case 'V': case 'Z': case 'B': case 'C':
-			case 'S': case 'I': case 'J': case 'F':
-			case 'D': case '[': case '(': case ')':
-				out += desc.charAt(pos);
-				pos++;
-				break;
-			case 'L':
-				{
-					int end = desc.indexOf(';', pos);
-					String obf = desc.substring(pos + 1, end);
-					pos = end + 1;
-					out += "L" + getClass(obf) + ";";
-				}
-				break;
-			default:
-				throw new RuntimeException("Unknown method descriptor character: " + desc.charAt(pos) + " (in " + desc + ")");
-			}
-		}
-		return out;
+		return parseTypes(desc, false, true);
 	}
 	
 	public String mapTypeDescriptor(String in) {
-		if(in.startsWith("["))
-			return "[" + mapTypeDescriptor(in.substring(1));
-		if(in.startsWith("L") && in.endsWith(";"))
-			return "L" + getClass(in.substring(1, in.length() - 1)) + ";";
-		return in;
+		if (in.length() == 0)
+			throw new IllegalArgumentException("Not a valid type descriptor: " + in);
+		return parseTypes(in, false, false);
 	}
 }

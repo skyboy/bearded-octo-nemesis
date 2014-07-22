@@ -13,6 +13,7 @@ import java.util.Set;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -253,26 +254,43 @@ public class Remapper {
 					for (LocalVariableNode lvn : mn.localVariables)
 						lvn.desc = m.mapTypeDescriptor(lvn.desc);
 				
-				// TODO: support annotations (even though Minecraft doesn't use them)
-				// TODO: support signatures (for generics, even though Minecraft doesn't use them after obfuscation)
+				mn.signature = m.parseTypes(mn.signature, true, true);
+				
+				if (mn.visibleAnnotations != null)
+					for (AnnotationNode n : mn.visibleAnnotations)
+						n.desc = m.parseTypes(n.desc, true, false);
+				if (mn.invisibleAnnotations != null)
+					for (AnnotationNode n : mn.invisibleAnnotations)
+						n.desc = m.parseTypes(n.desc, true, false);
 			}
 			
 			for (FieldNode fn : cn.fields) {
 				fn.name = m.getField(cn.name, fn.name, fn.desc);
 				fn.desc = m.mapTypeDescriptor(fn.desc);
+				fn.signature = m.parseTypes(fn.signature, true, false);
 				
-				// TODO: support annotations (even though Minecraft doesn't use them)
-				// TODO: support signatures (for generics, even though Minecraft doesn't use them after obfuscation)
+				if (fn.visibleAnnotations != null)
+					for (AnnotationNode n : fn.visibleAnnotations)
+						n.desc = m.parseTypes(n.desc, true, false);
+				if (fn.invisibleAnnotations != null)
+					for (AnnotationNode n : fn.invisibleAnnotations)
+						n.desc = m.parseTypes(n.desc, true, false);
 			}
 			
 			cn.name = m.getClass(cn.name);
 			cn.superName = m.getClass(cn.superName);
 			
-			for (int k = 0; k < cn.interfaces.size(); k++)
+			cn.signature = m.parseTypes(cn.signature, true, false);
+			
+			for (int k = 0, e = cn.interfaces.size(); k <e; k++)
 				cn.interfaces.set(k, m.getClass(cn.interfaces.get(k)));
 			
-			// TODO: support annotations (even though Minecraft doesn't use them)
-			// TODO: support signatures (for generics, even though Minecraft doesn't use them after obfuscation)
+			if (cn.visibleAnnotations != null)
+				for (AnnotationNode n : cn.visibleAnnotations)
+					n.desc = m.parseTypes(n.desc, true, false);
+			if (cn.invisibleAnnotations != null)
+				for (AnnotationNode n : cn.invisibleAnnotations)
+					n.desc = m.parseTypes(n.desc, true, false);
 			
 			for (InnerClassNode icn : cn.innerClasses) {
 				icn.name = m.getClass(icn.name);
