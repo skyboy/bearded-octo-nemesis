@@ -1,10 +1,9 @@
-<project name="MineFactoryReloaded" default="install" basedir=".">
+<project name="BON" default="install" basedir=".">
 	<property environment="env"/>
 	
 	<!-- Basic directories -->
 	<property name="src.dir" value="src"/>
 	<property name="build.dir" value="build"/>
-	<property name="resources.dir" value="resources"/>
 	<property name="download.dir" value="${build.dir}/downloads"/>
 	
 	<!-- Project information -->
@@ -46,7 +45,6 @@
 				<fileset dir="@{classes}">
 					<include name="**/*.class"/>
 				</fileset>
-				<fileset dir="${resources.dir}"/>
 			</copy>
 			<jar destfile="${dist.dir}/${build.name}-@{build}.jar"
 				compress="true" level="9" basedir="${classes.dir}"
