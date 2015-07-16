@@ -14,7 +14,6 @@
 	<property name="dist.dir" value="${build.dir}/dist"/>
 	<property name="compile.dir" value="${build.dir}/compile"/>
 	<property name="classes.dir" value="${build.dir}/packaging"/>
-	<property name="apiclasses.dir" value="${build.dir}/api-packaging"/>
 
 	<!-- Enforce some paths -->
 	<mkdir dir="${build.dir}"/>
@@ -27,12 +26,10 @@
 	<!-- Building process -->
 	<target name="install" depends="build">
 		<!-- Cleanup -->
-		<delete dir="${apiclasses.dir}"/>
 		<delete dir="${classes.dir}"/>
 		<delete>
 			<fileset dir="${dist.dir}">
 				<exclude name="${build.name}-${build.number}.jar"/>
-				<exclude name="${build.name}-API-${build.number}.zip"/>
 			</fileset>
 		</delete>
 	</target>
@@ -67,14 +64,6 @@
 		
 		<local name="build"/><property name="build" value="${build.number}"/>
 		<install-lite build="${build}"/>
-	</target>
-
-	<target name="package-api" depends="get-build-number" unless="already.compiled" if="has.api">
-		<!-- Copy & package API -->
-		<copy todir="${apiclasses.dir}/${class.pckg}/api">
-			<fileset dir="${src.dir}/${class.pckg}/api"/>
-		</copy>
-		<zip destfile="${dist.dir}/${build.name}-API-${build.number}.zip" basedir="${apiclasses.dir}"/>
 	</target>
 
 	<target name="get-build-number" depends="build-number-there" unless="build.number">
