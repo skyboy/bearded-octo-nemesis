@@ -12,92 +12,13 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class AccessTransformer {
-
-	// returns [realOwner, realDesc]
-	// or null if the method could not be resolved
-	private static String[] resolveMethod(Map<String, ClassNode> refClasses, String owner, String name, String desc) {
-
-		ClassNode cn = refClasses.get(owner);
-		if (cn == null)
-			return null;
-
-		String[] r = null;
-
-		if ((cn.access & Opcodes.ACC_INTERFACE) != 0) {
-
-			// interface method resolution; http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-5.html#jvms-5.4.3.4
-
-			for (MethodNode mn : cn.methods) {
-				if (mn.name.equals(name) && mn.desc.equals(desc)) {
-					r = new String[] { owner, desc, name };
-					break;
-				}
-			}
-
-			for (String i : cn.interfaces) {
-				String[] result = resolveMethod(refClasses, i, name, desc);
-				if (r == null ? result != null : (result != null && !result[2].equals(r[2])))
-					return result;
-			}
-
-			return r;
-
-		} else {
-
-			// normal method resolution; http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-5.html#jvms-5.4.3.3
-
-			for (MethodNode mn : cn.methods) {
-				if (mn.name.equals(name) && mn.desc.equals(desc)) {
-					r = new String[] { owner, desc, name };
-					break;
-				}
-			}
-
-			String originalOwner = owner;
-
-			while (true) {
-				cn = refClasses.get(owner);
-				if (cn == null)
-					break;
-
-				if (r == null) for (MethodNode mn : cn.methods) {
-					if (mn.name.equals(name) && mn.desc.equals(desc)) {
-						r = new String[] { owner, desc, name };
-						break;
-					}
-				}
-
-				owner = cn.superName;
-			}
-
-			owner = originalOwner;
-
-			while (true) {
-				cn = refClasses.get(owner);
-				if (cn == null)
-					break;
-
-				for (String i : cn.interfaces) {
-					String[] result = resolveMethod(refClasses, i, name, desc);
-					if (r == null ? result != null : (result != null && !result[2].equals(r[2])))
-						return result;
-				}
-
-				owner = cn.superName;
-			}
-
-			return r;
-		}
-	}
 
 	public static ClassCollection remap(ClassCollection cc, Collection<ClassCollection> refs, IProgressListener progress) {
 
@@ -153,23 +74,17 @@ public class AccessTransformer {
 			for (MethodNode mn : cn.methods) {
 
 				int access = mn.access;
-				for (String owner = cn.name; ;) {
-					String[] r = resolveMethod(refClasses, owner, mn.name, mn.desc);
-					if (r != null) {
-						owner = r[0];
-						m = methodAccess.get(owner + '/' + mn.name + mn.desc);
-						if (m != null) {
-							access = m.getFixedAccess(access);
-						}
-						m = methodAccess.get(owner + "/*()V");
-						if (m != null) {
-							access = m.getFixedAccess(access);
-						}
-						ClassNode clazz = refClasses.get(owner);
-						owner = clazz.superName;
-						continue;
+				for (String owner = cn.name; owner != null;) {
+					m = methodAccess.get(owner + '/' + mn.name + mn.desc);
+					if (m != null) {
+						access = m.getFixedAccess(access);
 					}
-					break;
+					m = methodAccess.get(owner + "/*()V");
+					if (m != null) {
+						access = m.getFixedAccess(access);
+					}
+					ClassNode clazz = refClasses.get(owner);
+					owner = clazz.superName;
 				}
 				mn.access = access;
 			}
