@@ -1,6 +1,9 @@
 package immibis.bon;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Mapping {
 	private Map<String, String> classes = new HashMap<String, String>();
@@ -9,30 +12,30 @@ public class Mapping {
 	private Map<String, List<String>> exceptions = new HashMap<String, List<String>>();
 	private Map<String, String> classPrefixes = new HashMap<String, String>();
 	private String defaultPackage = "";
-	
+
 	public final NameSet fromNS, toNS;
-	
+
 	public Mapping(NameSet fromNS, NameSet toNS) {
 		this.fromNS = fromNS;
 		this.toNS = toNS;
 	}
-	
+
 	public void setClass(String in, String out) {
 		classes.put(in, out);
 	}
-	
+
 	public void setMethod(String clazz, String name, String desc, String out) {
 		methods.put(clazz + "/" + name + desc, out);
 	}
-	
+
 	public void setField(String clazz, String name, String out) {
 		fields.put(clazz + "/" + name, out);
 	}
-	
+
 	public void setExceptions(String clazz, String method, String desc, List<String> exc) {
 		exceptions.put(clazz + "/" + method + desc, exc);
 	}
-	
+
 	public String getClass(String in) {
 		if(in == null)
 			return null;
@@ -50,7 +53,7 @@ public class Mapping {
 			default:
 				break;
 			}
-		
+
 		String ret = classes.get(in);
 		if(ret != null)
 			return ret;
@@ -61,31 +64,31 @@ public class Mapping {
 			return defaultPackage + in;
 		return in;
 	}
-	
+
 	public String getMethod(String clazz, String name, String desc) {
 		String ret = methods.get(clazz + "/" + name + desc);
 		return ret == null ? name : ret;
 	}
-	
+
 	public String getField(String clazz, String name, String desc) {
 		String ret = fields.get(clazz + "/" + name);
 		return ret == null ? name : ret;
 	}
-	
+
 	public List<String> getExceptions(String clazz, String method, String desc) {
 		List<String> ret = exceptions.get(clazz + "/" + method + desc);
 		return ret == null ? Collections.<String>emptyList() : ret;
 	}
-	
+
 	public void addPrefix(String old, String new_) {
 		classPrefixes.put(old, new_);
 	}
-	
+
 	// p must include trailing slash
 	public void setDefaultPackage(String p) {
 		defaultPackage = p;
 	}
-	
+
 	public String parseTypes(String type, boolean generic, boolean method) {
 		if (type == null) return null;
 		int pos = 0, len = type.length(), l = type.indexOf('<');
@@ -106,7 +109,7 @@ public class Mapping {
 					out.append('L');
 					char o = ';';
 					int end = type.indexOf(';', pos);
-					if ((l > 0) & end > l) {
+					if ((l > 0) & end > l & l > pos) {
 						end = l;
 						o = '<';
 						l = type.indexOf('<', l + 1);
@@ -131,10 +134,10 @@ public class Mapping {
 		// some basic sanity checks, doesn't ensure it's completely valid though
 		if(desc.length() == 0 || desc.charAt(0) != '(' || desc.indexOf(")") < 1)
 			throw new IllegalArgumentException("Not a valid method descriptor: " + desc);
-		
+
 		return parseTypes(desc, false, true);
 	}
-	
+
 	public String mapTypeDescriptor(String in) {
 		if (in.length() == 0)
 			throw new IllegalArgumentException("Not a valid type descriptor: " + in);
