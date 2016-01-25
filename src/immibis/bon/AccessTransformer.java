@@ -84,7 +84,7 @@ public class AccessTransformer {
 						access = m.getFixedAccess(access);
 					}
 					ClassNode clazz = refClasses.get(owner);
-					owner = clazz.superName;
+					owner = clazz == null ? null : clazz.superName;
 				}
 				mn.access = access;
 			}
