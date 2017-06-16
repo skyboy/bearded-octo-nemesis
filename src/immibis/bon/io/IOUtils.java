@@ -28,7 +28,7 @@ public class IOUtils {
 		try {
 			new ClassReader(bytes).accept(cn, 0);
 		} catch(RuntimeException e) {
-			throw new ClassFormatException("Unable to load class");
+			throw new ClassFormatException("Unable to load class", e);
 		}
 		
 		return cn;
