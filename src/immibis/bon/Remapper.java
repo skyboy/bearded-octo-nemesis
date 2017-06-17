@@ -10,21 +10,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.AnnotationNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.FrameNode;
-import org.objectweb.asm.tree.InnerClassNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.LocalVariableNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TryCatchBlockNode;
-import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.*;
 
 public class Remapper {
 	
@@ -233,6 +222,52 @@ public class Remapper {
 							TypeInsnNode tin = (TypeInsnNode)ain;
 							
 							tin.desc = m.getClass(tin.desc);
+						} else if (ain instanceof InvokeDynamicInsnNode) {
+							InvokeDynamicInsnNode min = (InvokeDynamicInsnNode)ain;
+							if (min.bsmArgs.length < 3)
+								continue;
+							if (!"java/lang/invoke/LambdaMetafactory".equals(min.bsm.getOwner()))
+								continue;
+							if (!"metafactory".equals(min.bsm.getName()))
+								continue;
+							if (!min.bsm.getDesc().equals("(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;" +
+									"Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"))
+								continue;
+
+							// on bsmArgs:
+							// * [0] is the generic call desc
+							// * [1] is the method that contains the code
+							// * [2] is the (potentially) specialized call desc
+							// anything else is a custom argument and we should not(?) process it. beyond lambda scope anyway
+							Type[] args = Type.getArgumentTypes(min.desc);
+							String realOwner = Type.getReturnType(min.desc).getDescriptor();
+							if (realOwner.length() >= 3) {
+								realOwner = realOwner.substring(1, realOwner.length() - 1); // L...;
+							}
+							String realDesc = ((Type)min.bsmArgs[0]).getDescriptor();
+							String[] realOwnerAndDesc = resolveMethod(refClasses, realOwner, min.name, realDesc, m);
+
+							String realOwner2 = realOwnerAndDesc == null ? realOwner : realOwnerAndDesc[0];
+							realDesc = realOwnerAndDesc == null ? realDesc : realOwnerAndDesc[1];
+
+							min.name = m.getMethod(realOwner2, min.name, realDesc);
+							min.desc = Type.getMethodDescriptor(Type.getObjectType(m.getClass(realOwner)), args);
+							min.bsmArgs[0] = Type.getType(m.mapMethodDescriptor(realDesc));
+							min.bsmArgs[2] = Type.getType(m.mapMethodDescriptor(((Type)min.bsmArgs[2]).getDescriptor()));
+							Handle h = (Handle)min.bsmArgs[1];
+							realOwner = h.getOwner();
+							realDesc = h.getDesc();
+							realOwnerAndDesc = resolveMethod(refClasses, realOwner, h.getName(), realDesc, m);
+
+							realOwner = realOwnerAndDesc == null ? realOwner : realOwnerAndDesc[0];
+							realDesc = realOwnerAndDesc == null ? realDesc : realOwnerAndDesc[1];
+
+							min.bsmArgs[1] = new Handle(
+									h.getTag(),
+									m.getClass(h.getOwner()),
+									m.getMethod(realOwner, h.getName(), realDesc),
+									m.mapMethodDescriptor(realDesc)
+							);
 						}
 					}
 				}
@@ -316,7 +351,8 @@ public class Remapper {
 		
 	}
 
-	public static ClassCollection remap(ClassCollection classes, NameSet toNS, Collection<ClassCollection> refs, IProgressListener progress) throws MappingUnavailableException, IOException {
+	public static ClassCollection remap(ClassCollection classes, NameSet toNS, Collection<ClassCollection> refs, IProgressListener progress)
+			throws MappingUnavailableException, IOException {
 		return remap(classes, MappingFactory.getMapping(classes.getNameSet(), toNS, null), refs, progress);
 	}
 
